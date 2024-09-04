@@ -1,0 +1,164 @@
+vars: {
+    d2-config: {
+        layout-engine: elk
+        # Flagship Terrastruct
+        theme-id: 3
+    }
+}
+direction: right
+classes: {
+    transp: {
+        style: {
+            stroke: transparent
+            fill: transparent        
+        }
+    }
+    transpdash: {
+        style: {
+            stroke-dash: 3
+            fill: transparent        
+        }
+    }
+    font_big: {
+        style: {
+            font-size: 24
+        }
+    }
+    # rounded-rectangle
+    rr: {
+        style: {
+            border-radius: 6
+        }
+    }
+}
+
+d: '' {
+    grid-rows: 1
+    hw: Hardware {
+        grid-columns: 1
+        class: transpdash
+        spin: SPIN {
+            icon: https://icons.terrastruct.com/tech%2Fservers.svg
+        }
+
+        perlmutter: Perlmutter {
+            grid-columns: 1
+            icon: https://icons.terrastruct.com/tech%2Fservers.svg
+            prom_e: Prometheus endpoints
+            exp: Exporters {
+                shape: step
+                text: |md
+                * Vmoperator
+                * VMagent
+                * other exporters
+                |
+            }
+            kafka: Kafka {
+                shape: parallelogram
+            }
+            telem_api: Telemetry API {
+                shape: parallelogram
+            }
+            kafka -> telem_api
+        }
+        
+        cori: CORI {
+            icon: https://icons.terrastruct.com/tech%2Fservers.svg
+        }
+        switches: {
+            shape: image
+            icon: https://icons.terrastruct.com/tech%2Frouter.svg
+        }
+    }
+    middle: '' {
+        class: transp
+        hw_mon: '' {
+            modbus: Modbus
+            backnet: Backnet
+            onewire: Onewire
+            exporter: Exporter API
+            exporter.width: 400
+            modbus -> exporter
+            backnet -> exporter
+            onewire -> exporter
+        }
+        bms: Building Management System {
+            class: rr
+        }
+
+        redfish: Redfish
+
+        k3s_pods: K3s Python pods {
+            class: rr
+        }
+
+        loki: Grafana loki log tailing {
+            class: rr
+        }
+
+        vm_alert: '' {
+            almgr: Alert Manager
+            vmal: VMAlert
+            vmag: VMagent
+        }
+
+        vmag: VMAgent {
+            class: rr
+        }
+        service_endpoints: Services {
+            text: |md
+            * Servicenow
+            * Email
+            * Slack
+            |
+        }
+        
+        prom_endpoints: Prometheus endpoints {
+            class: rr
+        }
+        
+        omni_exp: OMNI exporter {
+            shape: parallelogram
+        }
+        
+    }
+    dbs: Databases {
+        grid-columns: 1
+        class: transpdash
+        vmdb: Victoria Metrics DB {
+            shape: image
+            icon: https://icons.terrastruct.com/essentials%2F117-database.svg
+        }
+
+        es: ElasticSearch {
+            shape: image
+            icon: https://icons.terrastruct.com/essentials%2F117-database.svg
+        }
+    }
+    display: Display {
+        grid-columns: 1
+        class: transpdash
+        grafana: Grafana {
+            shape: image
+            icon: https://icons.terrastruct.com/azure%2FGeneral%20Service%20Icons%2FShared%20Dashboard.svg
+        }
+
+        kibana: Kibana {
+            shape: image
+            icon: https://icons.terrastruct.com/azure%2FGeneral%20Service%20Icons%2FShared%20Dashboard.svg
+        }
+    }
+# Connections
+
+dbs.vmdb -> display.grafana
+middle.vm_alert.almgr -> middle.service_endpoints
+middle.vm_alert -> dbs.vmdb
+dbs.es -> display.kibana
+hw.perlmutter.telem_api -> middle.k3s_pods -> dbs.es
+hw.perlmutter.exp -> middle.loki -> middle.vm_alert
+middle.hw_mon.exporter -> middle.vmag -> dbs.es
+hw.switches -> middle.redfish
+middle.bms -> middle.omni_exp
+}
+
+
