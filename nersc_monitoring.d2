@@ -10,13 +10,13 @@ classes: {
     transp: {
         style: {
             stroke: transparent
-            fill: transparent        
+            fill: transparent
         }
     }
     transpdash: {
         style: {
             stroke-dash: 3
-            fill: transparent        
+            fill: transparent
         }
     }
     font_big: {
@@ -37,7 +37,22 @@ d: '' {
     hw: Hardware {
         grid-columns: 1
         class: transpdash
-        spin: SPIN {
+        bms: Building Management System {
+            class: rr
+        }
+        apex: Lighthouse Apex Particle Sensors {
+            class: rr
+        }
+        trendpoint: Trendpoint Power Meters  {
+            class: rr
+        }
+        ion: ION Substation Meters  {
+            class: rr
+        }
+        otemp: Onewire Temperature Sensors {
+            class: rr
+        }
+        spin: ISG SPIN {
             icon: https://icons.terrastruct.com/tech%2Fservers.svg
         }
 
@@ -61,32 +76,35 @@ d: '' {
             }
             kafka -> telem_api
         }
-        
+
         cori: CORI {
             icon: https://icons.terrastruct.com/tech%2Fservers.svg
         }
         switches: {
-            shape: image
+            grid-columns: 1
             icon: https://icons.terrastruct.com/tech%2Frouter.svg
+            redfish: Redfish {
+                shape: parallelogram
+            }
         }
     }
+
     middle: '' {
         class: transp
         hw_mon: '' {
-            modbus: Modbus
-            backnet: Backnet
-            onewire: Onewire
-            exporter: Exporter API
-            exporter.width: 400
-            modbus -> exporter
-            backnet -> exporter
-            onewire -> exporter
+            modbus: Modbus Gateway
+            bacnet: Bacnet Gateway
+            onewire: Onewire Gateway
+            modbus_exporter: MODBUS Exporter
+            modbus_exporter.width: 150
+            bacnet_exporter: BACNET Exporter
+            bacnet_exporter.width: 150
+            onewire_exporter: OneWire Exporter
+            onewire_exporter.width: 150
+            modbus -> modbus_exporter
+            bacnet -> bacnet_exporter
+            onewire -> onewire_exporter
         }
-        bms: Building Management System {
-            class: rr
-        }
-
-        redfish: Redfish
 
         k3s_pods: K3s Python pods {
             class: rr
@@ -112,15 +130,16 @@ d: '' {
             * Slack
             |
         }
-        
+        sfapi:  Superfacilities API {
+
+        }
+        fusion:  Fusion API {
+
+        }
         prom_endpoints: Prometheus endpoints {
             class: rr
         }
-        
-        omni_exp: OMNI exporter {
-            shape: parallelogram
-        }
-        
+
     }
     dbs: Databases {
         grid-columns: 1
@@ -147,6 +166,7 @@ d: '' {
             shape: image
             icon: https://icons.terrastruct.com/azure%2FGeneral%20Service%20Icons%2FShared%20Dashboard.svg
         }
+
     }
 # Connections
 
@@ -156,9 +176,13 @@ middle.vm_alert -> dbs.vmdb
 dbs.es -> display.kibana
 hw.perlmutter.telem_api -> middle.k3s_pods -> dbs.es
 hw.perlmutter.exp -> middle.loki -> middle.vm_alert
-middle.hw_mon.exporter -> middle.vmag -> dbs.es
-hw.switches -> middle.redfish
-middle.bms -> middle.omni_exp
+middle.hw_mon.modbus_exporter -> middle.vm_alert -> dbs.es
+middle.hw_mon.bacnet_exporter -> middle.vm_alert -> dbs.es
+middle.hw_mon.onewire_exporter -> middle.vm_alert -> dbs.es
+hw.switches -> middle.vm_alert
+hw.bms -> middle.hw_mon.bacnet
+hw.apex -> middle.hw_mon.modbus
+hw.ion -> middle.hw_mon.modbus
+hw.trendpoint -> middle.hw_mon.modbus
+hw.otemp -> middle.hw_mon.onewire
 }
-
-
