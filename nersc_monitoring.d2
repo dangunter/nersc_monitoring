@@ -54,20 +54,20 @@ d: '' {
         }
         spin: ISG SPIN {
             icon: https://icons.terrastruct.com/tech%2Fservers.svg
+            exp: Exporters {
+                shape: step
+                text: |md
+                * Vmoperator
+                * VMAgent
+                * other exporters
+                |
+            }
         }
 
         perlmutter: Perlmutter {
             grid-columns: 1
             icon: https://icons.terrastruct.com/tech%2Fservers.svg
             prom_e: Prometheus endpoints
-            exp: Exporters {
-                shape: step
-                text: |md
-                * Vmoperator
-                * VMagent
-                * other exporters
-                |
-            }
             kafka: Kafka {
                 shape: parallelogram
             }
@@ -75,49 +75,84 @@ d: '' {
                 shape: parallelogram
             }
             kafka -> telem_api
+            exp: Exporters {
+                shape: step
+                text: |md
+                * Vmoperator
+                * VMAgent
+                * other exporters
+                |
+            }
+            telem_api -> exp
         }
 
         cori: CORI {
             icon: https://icons.terrastruct.com/tech%2Fservers.svg
         }
-        switches: {
+        omni_hw: OMNI Hardware {
             grid-columns: 1
             icon: https://icons.terrastruct.com/tech%2Frouter.svg
-            redfish: Redfish {
-                shape: parallelogram
+            switches: Network Switches {
+                shape: step
+                text: |md
+                * Redfish
+                |
+            }
+            gigabyte: Gigabyte {
+                shape: step
+                text: |md
+                * Redfish
+                |
+            }
+            hippos: Hippos {
+                shape: step
+                text: |md
+                * Redfish
+                |
             }
         }
     }
-
+    ingest: OMNI Network Gateway {
+        class: transpdash
+        grid-columns: 1
+        device_gateway: '' {
+          class: rr
+          grid-columns: 1
+          bacnet: Bacnet Gateway
+          modbus: Modbus Gateway
+          onewire: Onewire Gateway
+        }
+        isg_ingest: 'ISG Forwarder' {
+          class: rr
+          vmagent-isg: VMAgent
+        }
+        perlmutter_ingest: 'Perlumtter Forwarder' {
+          class: rr
+          grid-columns: 1
+          logstash: Logstash
+          vmagent-p: VMAgent
+        }
+        redfish_ingest: '' {
+          class: rr
+          grid-columns: 1
+          exp: Redfish Exporter
+        }
+    }
     middle: '' {
-        class: transp
+        class: transpdash
         hw_mon: '' {
-            modbus: Modbus Gateway
-            bacnet: Bacnet Gateway
-            onewire: Onewire Gateway
-            modbus_exporter: MODBUS Exporter
-            modbus_exporter.width: 150
             bacnet_exporter: BACNET Exporter
             bacnet_exporter.width: 150
+            modbus_exporter: MODBUS Exporter
+            modbus_exporter.width: 150
             onewire_exporter: OneWire Exporter
             onewire_exporter.width: 150
-            modbus -> modbus_exporter
-            bacnet -> bacnet_exporter
-            onewire -> onewire_exporter
         }
 
-        k3s_pods: K3s Python pods {
-            class: rr
-        }
-
-        loki: Grafana loki log tailing {
-            class: rr
-        }
-
-        vm_alert: '' {
+        vm_operator: 'VM Operator' {
             almgr: Alert Manager
             vmal: VMAlert
-            vmag: VMagent
+            vmag: VMAgent
         }
 
         vmag: VMAgent {
@@ -153,6 +188,15 @@ d: '' {
             shape: image
             icon: https://icons.terrastruct.com/essentials%2F117-database.svg
         }
+
+        loki: Loki logs {
+            shape: image
+            icon: https://icons.terrastruct.com/essentials%2F117-database.svg
+        }
+        vm-logs: VictoriaMetrics logs {
+            shape: image
+            icon: https://icons.terrastruct.com/essentials%2F117-database.svg
+        }
     }
     display: Display {
         grid-columns: 1
@@ -171,18 +215,29 @@ d: '' {
 # Connections
 
 dbs.vmdb -> display.grafana
-middle.vm_alert.almgr -> middle.service_endpoints
-middle.vm_alert -> dbs.vmdb
+middle.vm_operator.almgr -> middle.service_endpoints
+middle.vm_operator -> dbs.vmdb
 dbs.es -> display.kibana
-hw.perlmutter.telem_api -> middle.k3s_pods -> dbs.es
-hw.perlmutter.exp -> middle.loki -> middle.vm_alert
-middle.hw_mon.modbus_exporter -> middle.vm_alert -> dbs.es
-middle.hw_mon.bacnet_exporter -> middle.vm_alert -> dbs.es
-middle.hw_mon.onewire_exporter -> middle.vm_alert -> dbs.es
-hw.switches -> middle.vm_alert
-hw.bms -> middle.hw_mon.bacnet
-hw.apex -> middle.hw_mon.modbus
-hw.ion -> middle.hw_mon.modbus
-hw.trendpoint -> middle.hw_mon.modbus
-hw.otemp -> middle.hw_mon.onewire
+hw.perlmutter.kafka -> ingest.perlmutter_ingest.logstash -> dbs.loki
+middle.hw_mon.modbus_exporter -> middle.vm_operator -> dbs.es
+middle.hw_mon.bacnet_exporter -> middle.vm_operator -> dbs.es
+middle.hw_mon.onewire_exporter -> middle.vm_operator -> dbs.es
+hw.omni_hw.switches -> ingest.redfish_ingest.exp
+hw.omni_hw.gigabyte -> ingest.redfish_ingest.exp
+hw.omni_hw.hippos -> ingest.redfish_ingest.exp
+ingest.redfish_ingest.exp -> middle.vm_operator
+hw.bms -> ingest.device_gateway.bacnet
+hw.apex -> ingest.device_gateway.modbus
+hw.ion -> ingest.device_gateway.modbus
+hw.trendpoint -> ingest.device_gateway.modbus
+hw.otemp -> ingest.device_gateway.onewire
+ingest.device_gateway.bacnet -> middle.hw_mon.bacnet_exporter
+ingest.device_gateway.modbus -> middle.hw_mon.modbus_exporter
+ingest.device_gateway.modbus -> middle.hw_mon.modbus_exporter
+ingest.device_gateway.modbus -> middle.hw_mon.modbus_exporter
+ingest.device_gateway.onewire -> middle.hw_mon.onewire_exporter
+hw.perlmutter.exp -> ingest.perlmutter_ingest.vmagent-p
+hw.spin.exp -> ingest.isg_ingest.vmagent-isg
+ingest.perlmutter_ingest.vmagent-p -> dbs.vmdb
+ingest.isg_ingest.vmagent-isg -> dbs.vmdb
 }
