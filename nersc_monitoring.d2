@@ -83,7 +83,11 @@ d: '' {
                 * other exporters
                 |
             }
+            ldms: Lightweight Distributed Metric Service {
+              shape: parallelogram
+            }
             telem_api -> exp
+            ldms -> exp
         }
 
         cori: CORI {
@@ -104,7 +108,7 @@ d: '' {
                 * Redfish
                 |
             }
-            hippos: Hippos {
+            hippos: ASRock {
                 shape: step
                 text: |md
                 * Redfish
