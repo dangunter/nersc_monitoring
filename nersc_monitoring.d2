@@ -63,7 +63,29 @@ d: '' {
                 |
             }
         }
-
+        ngf: NGF {
+            icon: https://icons.terrastruct.com/tech%2Fservers.svg
+            exp: Exporters {
+                shape: step
+                text: |md
+                * Vmoperator
+                * VMAgent
+                * other exporters
+                * DTNs and Global File System
+                |
+            }
+        }
+        hpss: HPSS {
+            icon: https://icons.terrastruct.com/tech%2Fservers.svg
+            exp: Exporters {
+                shape: step
+                text: |md
+                * Vmoperator
+                * VMAgent
+                * other exporters
+                |
+            }
+        }
         perlmutter: Perlmutter {
             grid-columns: 1
             icon: https://icons.terrastruct.com/tech%2Fservers.svg
@@ -90,28 +112,29 @@ d: '' {
             ldms -> exp
         }
 
-        cori: CORI {
-            icon: https://icons.terrastruct.com/tech%2Fservers.svg
-        }
         omni_hw: OMNI Hardware {
             grid-columns: 1
             icon: https://icons.terrastruct.com/tech%2Frouter.svg
             switches: Network Switches {
                 shape: step
                 text: |md
-                * Redfish
+                * SNMP
                 |
             }
             gigabyte: Gigabyte {
                 shape: step
                 text: |md
                 * Redfish
+                * IPMI
+                * SNMP
                 |
             }
             hippos: ASRock {
                 shape: step
                 text: |md
                 * Redfish
+                * IPMI
+                * SNMP
                 |
             }
         }
@@ -130,7 +153,15 @@ d: '' {
           class: rr
           vmagent-isg: VMAgent
         }
-        perlmutter_ingest: 'Perlumtter Forwarder' {
+        ngf_ingest: 'NGF Forwarder' {
+          class: rr
+          vmagent-ngf: VMAgent
+        }
+        hpss_ingest: 'HPSS Forwarder' {
+          class: rr
+          vmagent-hpss: VMAgent
+        }
+        perlmutter_ingest: 'Perlmutter Forwarder' {
           class: rr
           grid-columns: 1
           logstash: Logstash
@@ -180,7 +211,7 @@ d: '' {
         }
 
     }
-    dbs: Databases {
+    dbs: Data Sources {
         grid-columns: 1
         class: transpdash
         vmdb: Victoria Metrics DB {
@@ -198,6 +229,10 @@ d: '' {
             icon: https://icons.terrastruct.com/essentials%2F117-database.svg
         }
         vm-logs: VictoriaMetrics logs {
+            shape: image
+            icon: https://icons.terrastruct.com/essentials%2F117-database.svg
+        }
+        servicenow: ServiceNow (MOTD Events) {
             shape: image
             icon: https://icons.terrastruct.com/essentials%2F117-database.svg
         }
@@ -242,6 +277,10 @@ ingest.device_gateway.modbus -> middle.hw_mon.modbus_exporter
 ingest.device_gateway.onewire -> middle.hw_mon.onewire_exporter
 hw.perlmutter.exp -> ingest.perlmutter_ingest.vmagent-p
 hw.spin.exp -> ingest.isg_ingest.vmagent-isg
+hw.ngf.exp -> ingest.ngf_ingest.vmagent-ngf
+hw.hpss.exp -> ingest.hpss_ingest.vmagent-hpss
 ingest.perlmutter_ingest.vmagent-p -> dbs.vmdb
 ingest.isg_ingest.vmagent-isg -> dbs.vmdb
+ingest.ngf_ingest.vmagent-ngf -> dbs.vmdb
+ingest.hpss_ingest.vmagent-hpss -> dbs.vmdb
 }
