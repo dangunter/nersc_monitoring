@@ -5,96 +5,262 @@
 #
 vars: {
     d2-config: {
-        layout-engine: elk
+        layout-engine: tala
         # Flagship Terrastruct
         theme-id: 3
     }
 }
 direction: right
 classes: {
-    transp: {
-        style: {
-            stroke: transparent
-            fill: transparent
-        }
-    }
-    transpdash: {
-        style: {
-            stroke-dash: 3
-            fill: transparent
-        }
-    }
-    font_big: {
-        style: {
-            font-size: 24
-        }
-    }
-    # rounded-rectangle
-    rr: {
-        style: {
+    b: {
+        style: { 
             border-radius: 6
+            fill: "#eeeeff"
         }
+    }
+    hw: {
+        style: { fill: "#999900" }
+    }
+    sw: {
+        style: { fill: "#eeeeee" }
+    }
+    db: {
+        icon: https://icons.terrastruct.com/essentials%2F117-database.svg
+    }
+    k3s: {
+        style: { fill: "#ccffff" }
+    }
+    vm: {
+        style: { fill: "#669999" }
+    }
+    exp: {
+        shape: parallelogram
+        style: { fill: "#9999cc" }
+    }
+    grp: {
+        style: { fill: transparent; stroke-dash: 3 }
+    }
+    transp: {
+        style: { fill: transparent; stroke: transparent }
+    }
+    person: {
+        icon: https://icons.terrastruct.com/essentials%2F365-user.svg
     }
 }
 
 layers: {
     top: {
-        systems: Systems {
-            compute_systems: Compute Systems {
-                icon: https://icons.terrastruct.com/tech%2Fservers.svg
-                link: systems.compute
+        grid-rows: 1
+        sources: Data Sources {
+            class: [b; grp]
+            hpe: HPE Systems {
+                link: hpe_detail
+                class: b
             }
-            building_system: Building Systems {
+            bldg: Building Systems {
+                link: bldg_detail
+                class: b
             }
         }
-        infrastructure: Infrastructure {
-            monitoring: Monitoring Infrastructure {
-            }
+        ex: '' {
+            grid-columns: 1
+            style.opacity: 0
+            apid: API Data Consumer { class: [b; k3s] }
+            gw: Gateway { class: [b; k3s] }
         }
-        presentation: Reporting and Analysis {
-            databases: Databases {
-
+        k3sc: Kubernetes clusters {
+            class: b
+            link: k3sc_detail
+            width: 300
+            style: { shadow: true }
+            txt: |md
+            Multiple k3s clusters.  
+            One per NERSC group metrics.  
+            One per metric class for the  
+            environmentals. This is to limit  
+            cascading failures.
+            | 
+        }
+        dsa: Datastores & Access {
+            class: [b; grp]
+            link: dsa_detail
+            txt: |md
+            **Datastores**: Loki, VictoriaMetrics,  
+              ElasticSearch, Alert Manager  
+            **Access Points**: Fission, Grafana, Kibana
+            | 
+        }
+        users: Users {
+            grid-columns: 1
+            class: grp
+            big: Operations User { class: person }
+            end: End User { class: person }
+        }
+        sources.hpe -> ex.apid
+        sources.hpe -> ex.gw
+        sources.bldg -> ex.gw 
+        ex.gw -> k3sc
+        k3sc -> dsa
+        ex.apid -> dsa
+        dsa -> users.big
+        dsa -> users.end
+    }
+    hpe_detail: {
+        c: HPE System {
+            grid-columns: 1
+            kafka: Kafka { class: [b; sw] }
+            telem: Telemetry API { class: [b; sw] }
+            prom: Prometheus Exporters { class: [b; sw] }
+            vma: VMAgent { class: [b; sw] }
+            exp: 3rd Party and Custom Exporters { class: [b; sw] }
+            kafka -> telem
+            prom -> vma
+            exp -> vma
+        }
+        ex: '' {
+            grid-columns: 1
+            style.opacity: 0
+            apid: API Data Consumer { class: [b; k3s] }
+            gw: GW { class: [b; k3s] }
+        }
+        c.telem -> ex.apid
+        c.vma -> ex.gw
+    }
+    k3sc_detail: {
+        c: '' {
+            grid-columns: 1
+            class: transp
+            title: |md
+            # k3s Cluster Details
+            some text here
+            |
+            sw: '' {
+                grid-columns: 2
+                grid-rows: 2
+                class: transp
+                vma: VMAgent { class: [b; k3s ]}
+                vmi: VMInsert { class: [b; k3s ]}
+                vml: VMAlert { class: [b; k3s ]}
+                vms: VMSelect { class: [b; k3s ]}
+                vma -> vmi
+                vml -> vms
             }
-            analysis_tools: Tools {
-
+            vmst: VMStore {
+                grid-rows: 2
+                grid-columns: 4
+                style.fill: transparent
+                style.stroke: transparent
+                b01: ''
+                b02: ''
+                b03: ''
+                b04: ''
+                b11: ''
+                b12: ''
+                b13: ''
+                b14: ''
             }
+            sw.vmi -> vmst
+            vmst -> sw.vms
+        }
+        home: Back to top {
+            link: top
+            class: transp
         }
     }
-    systems: {
-        grid-rows: 1
-        source: Compute Systems {
-            grid-columns: 1
-            shasta: Shasta {
-                grid-rows: 1
-                exporters: Exporters {
+    bldg_detail: {
+        grid-columns: 1
+        title: |md
+        # Building detail
+        |
+        content: '' {
+            class: transp
+            gw: Gateway { 
+                class: [b; k3s]
+            }
+            c: '' {
+                grid-columns: 1
+                class: transp
+                lblnet: LBLnet {
+                    grid-columns: 2
+                    grid-rows: 3
+                    style: { stroke: transparent; fill: "#ff9999" }
+                    bacnet: bacnet { class: exp }
+                    modbus: modbus substations/UPS { class: exp }
+                    ion: ion  { class: exp }
+                    bms: B59 BMS { class: [b; hw]}
+                    db: B59 DB { class: [b; hw] }
+                }
+                other: Other exporters {
+                    class: grp
                     grid-columns: 1
-                    ldms: Lightweight Distributed Metric Service { }
-                    kafka: Kafka {}
-                    cstor: ClusterStor API { }
-                    e1000: E100 Manager Node { }
+                    emerson: Emerson PDU  { class: exp }
+                    rack: Rack PDU { class: exp }
+                    onewire: onewire  { class: exp }
+                    modbus: modbus panels { class: exp }
+                    ngf: NGF  { class: exp }
+                    hpss: HPSS  { class: exp } 
+                    isg: ISG { class: exp }
                 }
             }
-            spin: Spin {
-            }   
+            c.lblnet.bacnet -> gw
+            c.lblnet.modbus -> gw
+            c.lblnet.ion -> gw
+            c.other.emerson -> gw
+            c.other.rack -> gw
+            c.other.onewire -> gw
+            c.other.modbus -> gw
+            c.other.ngf -> gw
+            c.other.hpss -> gw
+            c.other.isg -> gw
         }
-        infra: Transport {
-            vector: Vector {}
+        home: Back to top {
+            link: top
+            class: transp
         }
-        sink: Databases {
-            grid-columns: 1
-            vmdb: Victoria Metrics {
-
+    }
+    sinks_detail: {
+        grid-columns: 1
+        class: transp
+        title: |md
+        # Data Sinks
+        |
+        content: '' {
+            grid-columns: 2
+            class: transp
+            src: '' {
+                grid-columns: 1
+                class: transp
+                apid: API Data Consumer { class: [b; k3s] }
+                vml: VMAlert { class: [b; k3s ]}
             }
-            loki: Grafana Loki {
-
+            tgt: '' {
+                grid-columns: 1
+                class: grp
+                loki: Loki {
+                    class: [b; sw; db]
+                }
+                vl: VictoriaLogs {
+                    class: [b; sw; db]
+                }
+                es: ElasticSearch {
+                    class: [b; sw; db]
+                }
+                am: Alert Manager {
+                    class: [b; sw; db]
+                }
+                loki -> am
             }
+            src.apid -> tgt.loki
+            src.apid -> tgt.vl
+            src.apid -> tgt.es
+            src.vml -> tgt.am
         }
-        source.shasta.exporters.kafka -> infra.vector
-        source.shasta.exporters.kafka -> infra.vector
-        source.shasta.exporters.cstor -> infra.vector: Data streaming
-        source.shasta.exporters.e1000 -> infra.vector: Syslog forwarding
-        infra.vector -> sink.vmdb: Metrics
-        infra.vector -> sink.loki: Logs
+    }
+    ap_detail: {
+        class: transp
+        title: |md
+        # OMNI Access Points
+        |
     }
 }
 # Original diagram data 
