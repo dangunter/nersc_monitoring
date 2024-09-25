@@ -1,8 +1,5 @@
-#
-# This is a layered diagram so generation is best done to
-# PDF:
-# d2 .\nersc_monitoring.d2 .\nersc_monitoring.pdf
-#
+# note: to render properly, the links have temporarily had the
+# '.svg' suffix added
 vars: {
     d2-config: {
         layout-engine: tala
@@ -26,6 +23,9 @@ classes: {
     }
     db: {
         icon: https://icons.terrastruct.com/essentials%2F117-database.svg
+    }
+    acc: {
+        style: { fill: "#ccddff" }
     }
     k3s: {
         style: { fill: "#ccffff" }
@@ -54,11 +54,11 @@ layers: {
         sources: Data Sources {
             class: [b; grp]
             hpe: HPE Systems {
-                link: hpe_detail
+                link: hpe_detail.svg
                 class: b
             }
             bldg: Building Systems {
-                link: bldg_detail
+                link: bldg_detail.svg
                 class: b
             }
         }
@@ -70,7 +70,7 @@ layers: {
         }
         k3sc: Kubernetes clusters {
             class: b
-            link: k3sc_detail
+            link: k3sc_detail.svg
             width: 300
             style: { shadow: true }
             txt: |md
@@ -83,7 +83,7 @@ layers: {
         }
         dsa: Datastores & Access {
             class: [b; grp]
-            link: dsa_detail
+            link: dsa_detail.svg
             txt: |md
             **Datastores**: Loki, VictoriaMetrics,  
               ElasticSearch, Alert Manager  
@@ -162,10 +162,6 @@ layers: {
             sw.vmi -> vmst
             vmst -> sw.vms
         }
-        home: Back to top {
-            link: top
-            class: transp
-        }
     }
     bldg_detail: {
         grid-columns: 1
@@ -213,47 +209,94 @@ layers: {
             c.other.hpss -> gw
             c.other.isg -> gw
         }
-        home: Back to top {
-            link: top
-            class: transp
-        }
     }
-    sinks_detail: {
+    dsa_detail: {
         grid-columns: 1
         class: transp
         title: |md
-        # Data Sinks
+        # Data Stores & Access
         |
         content: '' {
-            grid-columns: 2
+            grid-columns: 1
             class: transp
             src: '' {
-                grid-columns: 1
                 class: transp
                 apid: API Data Consumer { class: [b; k3s] }
-                vml: VMAlert { class: [b; k3s ]}
             }
             tgt: '' {
                 grid-columns: 1
-                class: grp
-                loki: Loki {
-                    class: [b; sw; db]
+                class: transp
+                stores: '' {
+                    grid-rows: 1
+                    class: transp
+                    t: '' {
+                        grid-rows: 1
+                        class: grp
+                        loki: Loki {
+                            class: [b; sw; db]
+                        }
+                        vl: VictoriaLogs {
+                            class: [b; sw; db]
+                        }
+                        es: ElasticSearch {
+                            class: [b; sw; db]
+                        }
+                        am: Alert Manager {
+                            class: [b; sw; db]
+                        }
+                        loki -> am
+                    }
+                    s: '' {
+                        class: transp
+                        vml: VMAlert { class: [b; k3s ] }
+                    }
+                    s.vml -> t.am
                 }
-                vl: VictoriaLogs {
-                    class: [b; sw; db]
+
+                acc: '' {
+                    grid-rows: 1
+                    class: transp
+                    s: '' {
+                        class: transp
+                        vms: VMSelect { class: [b; k3s] }
+                    }
+                    t: '' {
+                        grid-rows: 1
+                        class: grp
+                        fission: Fission (FaaS) {
+                            class: [b; acc]
+                        }
+                        grafana: Grafana {
+                            class: [b; acc]
+                        }
+                        kibana: Kibana {
+                            class: [b; acc]
+                        }
+                    }
                 }
-                es: ElasticSearch {
-                    class: [b; sw; db]
+                off: '' {
+                    class: transp
+                    shp: Data Offloading {}
+                    t: |md
+                    Data streams to secondary  
+                    targets. These secondary target  
+                    will support advanced analytics  
+                    without compromising the
+                    |
                 }
-                am: Alert Manager {
-                    class: [b; sw; db]
-                }
-                loki -> am
             }
-            src.apid -> tgt.loki
-            src.apid -> tgt.vl
-            src.apid -> tgt.es
-            src.vml -> tgt.am
+            src.apid -> tgt.stores.t.loki
+            src.apid -> tgt.stores.t.vl
+            src.apid -> tgt.stores.t.es
+            tgt.stores.t.es -> tgt.acc.t.fission
+            tgt.stores.t.es -> tgt.acc.t.kibana
+            tgt.stores.t.es -> tgt.acc.t.grafana
+            tgt.stores.t.vl -> tgt.acc.t.grafana
+            tgt.stores.t.loki -> tgt.acc.t.grafana
+            tgt.acc.s.vms -> tgt.acc.t.fission
+            tgt.acc.s.vms -> tgt.acc.t.grafana
+            tgt.stores.s.vml -> tgt.off.shp
+            tgt.stores.t.loki -> tgt.off.shp  
         }
     }
     ap_detail: {
