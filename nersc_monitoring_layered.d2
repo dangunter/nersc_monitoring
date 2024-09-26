@@ -3,8 +3,7 @@
 vars: {
     d2-config: {
         layout-engine: tala
-        # Flagship Terrastruct
-        theme-id: 3
+        theme-id: 6
     }
 }
 direction: right
@@ -12,33 +11,34 @@ classes: {
     b: {
         style: { 
             border-radius: 6
-            fill: "#eeeeff"
         }
     }
     hw: {
-        style: { fill: "#999900" }
+        shape: rectangle
     }
     sw: {
-        style: { fill: "#eeeeee" }
+        shape: page
     }
     db: {
         icon: https://icons.terrastruct.com/essentials%2F117-database.svg
     }
     acc: {
-        style: { fill: "#ccddff" }
+        icon: https://icons.terrastruct.com/essentials%2F050-line%20chart.svg
+    }
+    dpipe: {
+        shape: queue
     }
     k3s: {
-        style: { fill: "#ccffff" }
+        icon: https://raw.githubusercontent.com/kubernetes/kubernetes/refs/heads/master/logo/logo.svg
     }
     vm: {
-        style: { fill: "#669999" }
+        shape: package
     }
     exp: {
         shape: parallelogram
-        style: { fill: "#9999cc" }
     }
     grp: {
-        style: { fill: transparent; stroke-dash: 3 }
+        style: { stroke-dash: 2 }
     }
     transp: {
         style: { fill: transparent; stroke: transparent }
@@ -69,7 +69,7 @@ layers: {
             gw: Gateway { class: [b; k3s] }
         }
         k3sc: Kubernetes clusters {
-            class: b
+            class: [b; k3s]
             link: k3sc_detail.svg
             width: 300
             style: { shadow: true }
@@ -95,6 +95,7 @@ layers: {
             class: grp
             big: Operations User { class: person }
             end: End User { class: person }
+            rsrch: Researcher { class: person }
         }
         sources.hpe -> ex.apid
         sources.hpe -> ex.gw
@@ -127,41 +128,38 @@ layers: {
         c.vma -> ex.gw
     }
     k3sc_detail: {
-        c: '' {
-            grid-columns: 1
+        class: transp
+        title: |md
+        # Kubernetes Cluster
+        VictoriaMetrics ...
+        |
+        sw: '' {
+            grid-columns: 2
+            grid-rows: 2
             class: transp
-            title: |md
-            # k3s Cluster Details
-            some text here
-            |
-            sw: '' {
-                grid-columns: 2
-                grid-rows: 2
-                class: transp
-                vma: VMAgent { class: [b; k3s ]}
-                vmi: VMInsert { class: [b; k3s ]}
-                vml: VMAlert { class: [b; k3s ]}
-                vms: VMSelect { class: [b; k3s ]}
-                vma -> vmi
-                vml -> vms
-            }
-            vmst: VMStore {
-                grid-rows: 2
-                grid-columns: 4
-                style.fill: transparent
-                style.stroke: transparent
-                b01: ''
-                b02: ''
-                b03: ''
-                b04: ''
-                b11: ''
-                b12: ''
-                b13: ''
-                b14: ''
-            }
-            sw.vmi -> vmst
-            vmst -> sw.vms
+            vma: VMAgent { class: [b; k3s]}
+            vmi: VMInsert { class: [b; k3s]}
+            vml: VMAlert { class: [b; k3s]}
+            vms: VMSelect { class: [b; k3s]}
+            vma -> vmi
+            vml -> vms
         }
+        vmst: VMStore {
+            grid-rows: 2
+            grid-columns: 4
+            style.fill: transparent
+            style.stroke: transparent
+            b01: ''
+            b02: ''
+            b03: ''
+            b04: ''
+            b11: ''
+            b12: ''
+            b13: ''
+            b14: ''
+        }
+        sw.vmi -> vmst
+        vmst -> sw.vms
     }
     bldg_detail: {
         grid-columns: 1
@@ -211,93 +209,83 @@ layers: {
         }
     }
     dsa_detail: {
-        grid-columns: 1
-        class: transp
+        direction: down
         title: |md
         # Data Stores & Access
-        |
-        content: '' {
-            grid-columns: 1
-            class: transp
-            src: '' {
-                class: transp
-                apid: API Data Consumer { class: [b; k3s] }
-            }
-            tgt: '' {
-                grid-columns: 1
-                class: transp
-                stores: '' {
-                    grid-rows: 1
-                    class: transp
-                    t: '' {
-                        grid-rows: 1
-                        class: grp
-                        loki: Loki {
-                            class: [b; sw; db]
-                        }
-                        vl: VictoriaLogs {
-                            class: [b; sw; db]
-                        }
-                        es: ElasticSearch {
-                            class: [b; sw; db]
-                        }
-                        am: Alert Manager {
-                            class: [b; sw; db]
-                        }
-                        loki -> am
-                    }
-                    s: '' {
-                        class: transp
-                        vml: VMAlert { class: [b; k3s ] }
-                    }
-                    s.vml -> t.am
-                }
-
-                acc: '' {
-                    grid-rows: 1
-                    class: transp
-                    s: '' {
-                        class: transp
-                        vms: VMSelect { class: [b; k3s] }
-                    }
-                    t: '' {
-                        grid-rows: 1
-                        class: grp
-                        fission: Fission (FaaS) {
-                            class: [b; acc]
-                        }
-                        grafana: Grafana {
-                            class: [b; acc]
-                        }
-                        kibana: Kibana {
-                            class: [b; acc]
-                        }
-                    }
-                }
-                off: '' {
-                    class: transp
-                    shp: Data Offloading {}
-                    t: |md
-                    Data streams to secondary  
-                    targets. These secondary target  
-                    will support advanced analytics  
-                    without compromising the
-                    |
-                }
-            }
-            src.apid -> tgt.stores.t.loki
-            src.apid -> tgt.stores.t.vl
-            src.apid -> tgt.stores.t.es
-            tgt.stores.t.es -> tgt.acc.t.fission
-            tgt.stores.t.es -> tgt.acc.t.kibana
-            tgt.stores.t.es -> tgt.acc.t.grafana
-            tgt.stores.t.vl -> tgt.acc.t.grafana
-            tgt.stores.t.loki -> tgt.acc.t.grafana
-            tgt.acc.s.vms -> tgt.acc.t.fission
-            tgt.acc.s.vms -> tgt.acc.t.grafana
-            tgt.stores.s.vml -> tgt.off.shp
-            tgt.stores.t.loki -> tgt.off.shp  
+        | {
+            near: top-center
         }
+        # External sources
+        apid: API Data Consumer { class: [b; k3s] }
+        vml: VMAlert {
+            class: [b; k3s ] 
+            near: access.dagster
+        }
+        vms: VMSelect {
+            class: [b; k3s] 
+        }
+        # stores
+        stores: Datastores {
+            class: grp
+            direction: right
+            class: grp
+            loki: Loki {
+                class: [b; sw; db]
+            }
+            vl: VictoriaLogs {
+                class: [b; sw; db]
+            }
+            es: ElasticSearch {
+                class: [b; sw; db]
+            }
+            am: Alert Manager {
+                class: [b; sw; db]
+            }
+            loki -> am
+        }
+        access: Access Points {
+            class: grp
+            fission: Fission (FaaS) {
+                class: [b; acc]
+            }
+            grafana: Grafana {
+                class: [b; acc]
+            }
+            kibana: Kibana {
+                class: [b; acc]
+            }
+            dagster: Dagster: Data pipelines {
+                class: { b; dpipe }
+                near: users.rsrch
+            }
+        }
+        users: Users {
+            class: grp
+            rsrch: Researcher { class: person }
+            big: Operations User { class: person }
+            end: End User { class: person }
+        }
+        # Connections
+        # into stores
+        apid -> stores.loki
+        apid -> stores.vl
+        apid -> stores.es
+        # stores -> access points
+        stores.es -> access.fission
+        stores.es -> access.kibana
+        stores.es -> access.grafana
+        stores.vl -> access.grafana
+        stores.loki -> access.grafana
+        stores.loki -> access.dagster
+        # into access points
+        vms -> access.fission
+        vms -> access.grafana
+        vml -> access.dagster
+        # access points -> users
+        access.fission -> users.big
+        access.grafana -> users.end
+        access.kibana -> users.big
+        access.dagster -> users.rsrch
     }
     ap_detail: {
         class: transp
@@ -306,256 +294,3 @@ layers: {
         |
     }
 }
-# Original diagram data 
-# d: '' {
-#     grid-rows: 1
-#     hw: Hardware {
-#         grid-columns: 1
-#         class: transpdash
-#         bms: Building Management System {
-#             class: rr
-#         }
-#         apex: Lighthouse Apex Particle Sensors {
-#             class: rr
-#         }
-#         trendpoint: Trendpoint Power Meters  {
-#             class: rr
-#         }
-#         ion: ION Substation Meters  {
-#             class: rr
-#         }
-#         otemp: Onewire Temperature Sensors {
-#             class: rr
-#         }
-#         spin: ISG SPIN {
-#             icon: https://icons.terrastruct.com/tech%2Fservers.svg
-#             exp: Exporters {
-#                 shape: step
-#                 text: |md
-#                 * Vmoperator
-#                 * VMAgent
-#                 * other exporters
-#                 |
-#             }
-#         }
-#         ngf: NGF {
-#             icon: https://icons.terrastruct.com/tech%2Fservers.svg
-#             exp: Exporters {
-#                 shape: step
-#                 text: |md
-#                 * Vmoperator
-#                 * VMAgent
-#                 * other exporters
-#                 * DTNs and Global File System
-#                 |
-#             }
-#         }
-#         hpss: HPSS {
-#             icon: https://icons.terrastruct.com/tech%2Fservers.svg
-#             exp: Exporters {
-#                 shape: step
-#                 text: |md
-#                 * Vmoperator
-#                 * VMAgent
-#                 * other exporters
-#                 |
-#             }
-#         }
-#         perlmutter: Perlmutter {
-#             grid-columns: 1
-#             icon: https://icons.terrastruct.com/tech%2Fservers.svg
-#             prom_e: Prometheus endpoints
-#             kafka: Kafka {
-#                 shape: parallelogram
-#             }
-#             telem_api: Telemetry API {
-#                 shape: parallelogram
-#             }
-#             kafka -> telem_api
-#             exp: Exporters {
-#                 shape: step
-#                 text: |md
-#                 * Vmoperator
-#                 * VMAgent
-#                 * other exporters
-#                 |
-#             }
-#             ldms: Lightweight Distributed Metric Service {
-#               shape: parallelogram
-#             }
-#             telem_api -> exp
-#             ldms -> exp
-#         }
-
-#         omni_hw: OMNI Hardware {
-#             grid-columns: 1
-#             icon: https://icons.terrastruct.com/tech%2Frouter.svg
-#             switches: Network Switches {
-#                 shape: step
-#                 text: |md
-#                 * SNMP
-#                 |
-#             }
-#             gigabyte: Gigabyte {
-#                 shape: step
-#                 text: |md
-#                 * Redfish
-#                 * IPMI
-#                 * SNMP
-#                 |
-#             }
-#             hippos: ASRock {
-#                 shape: step
-#                 text: |md
-#                 * Redfish
-#                 * IPMI
-#                 * SNMP
-#                 |
-#             }
-#         }
-#     }
-#     ingest: OMNI Network Gateway {
-#         class: transpdash
-#         grid-columns: 1
-#         device_gateway: '' {
-#           class: rr
-#           grid-columns: 1
-#           bacnet: Bacnet Gateway
-#           modbus: Modbus Gateway
-#           onewire: Onewire Gateway
-#         }
-#         isg_ingest: 'ISG Forwarder' {
-#           class: rr
-#           vmagent-isg: VMAgent
-#         }
-#         ngf_ingest: 'NGF Forwarder' {
-#           class: rr
-#           vmagent-ngf: VMAgent
-#         }
-#         hpss_ingest: 'HPSS Forwarder' {
-#           class: rr
-#           vmagent-hpss: VMAgent
-#         }
-#         perlmutter_ingest: 'Perlmutter Forwarder' {
-#           class: rr
-#           grid-columns: 1
-#           logstash: Logstash
-#           vmagent-p: VMAgent
-#         }
-#         redfish_ingest: '' {
-#           class: rr
-#           grid-columns: 1
-#           exp: Redfish Exporter
-#         }
-#     }
-#     middle: '' {
-#         class: transpdash
-#         hw_mon: '' {
-#             bacnet_exporter: BACNET Exporter
-#             bacnet_exporter.width: 150
-#             modbus_exporter: MODBUS Exporter
-#             modbus_exporter.width: 150
-#             onewire_exporter: OneWire Exporter
-#             onewire_exporter.width: 150
-#         }
-
-#         vm_operator: 'VM Operator' {
-#             almgr: Alert Manager
-#             vmal: VMAlert
-#             vmag: VMAgent
-#         }
-
-#         vmag: VMAgent {
-#             class: rr
-#         }
-#         service_endpoints: Services {
-#             text: |md
-#             * Servicenow
-#             * Email
-#             * Slack
-#             |
-#         }
-#         sfapi:  Superfacilities API {
-
-#         }
-#         fusion:  Fusion API {
-
-#         }
-#         prom_endpoints: Prometheus endpoints {
-#             class: rr
-#         }
-
-#     }
-#     dbs: Data Sources {
-#         grid-columns: 1
-#         class: transpdash
-#         vmdb: Victoria Metrics DB {
-#             shape: image
-#             icon: https://icons.terrastruct.com/essentials%2F117-database.svg
-#         }
-
-#         es: ElasticSearch {
-#             shape: image
-#             icon: https://icons.terrastruct.com/essentials%2F117-database.svg
-#         }
-
-#         loki: Loki logs {
-#             shape: image
-#             icon: https://icons.terrastruct.com/essentials%2F117-database.svg
-#         }
-#         vm-logs: VictoriaMetrics logs {
-#             shape: image
-#             icon: https://icons.terrastruct.com/essentials%2F117-database.svg
-#         }
-#         servicenow: ServiceNow (MOTD Events) {
-#             shape: image
-#             icon: https://icons.terrastruct.com/essentials%2F117-database.svg
-#         }
-#     }
-#     display: Display {
-#         grid-columns: 1
-#         class: transpdash
-#         grafana: Grafana {
-#             shape: image
-#             icon: https://icons.terrastruct.com/azure%2FGeneral%20Service%20Icons%2FShared%20Dashboard.svg
-#         }
-
-#         kibana: Kibana {
-#             shape: image
-#             icon: https://icons.terrastruct.com/azure%2FGeneral%20Service%20Icons%2FShared%20Dashboard.svg
-#         }
-
-#     }
-# # Connections
-
-# dbs.vmdb -> display.grafana
-# middle.vm_operator.almgr -> middle.service_endpoints
-# middle.vm_operator -> dbs.vmdb
-# dbs.es -> display.kibana
-# hw.perlmutter.kafka -> ingest.perlmutter_ingest.logstash -> dbs.loki
-# middle.hw_mon.modbus_exporter -> middle.vm_operator -> dbs.es
-# middle.hw_mon.bacnet_exporter -> middle.vm_operator -> dbs.es
-# middle.hw_mon.onewire_exporter -> middle.vm_operator -> dbs.es
-# hw.omni_hw.switches -> ingest.redfish_ingest.exp
-# hw.omni_hw.gigabyte -> ingest.redfish_ingest.exp
-# hw.omni_hw.hippos -> ingest.redfish_ingest.exp
-# ingest.redfish_ingest.exp -> middle.vm_operator
-# hw.bms -> ingest.device_gateway.bacnet
-# hw.apex -> ingest.device_gateway.modbus
-# hw.ion -> ingest.device_gateway.modbus
-# hw.trendpoint -> ingest.device_gateway.modbus
-# hw.otemp -> ingest.device_gateway.onewire
-# ingest.device_gateway.bacnet -> middle.hw_mon.bacnet_exporter
-# ingest.device_gateway.modbus -> middle.hw_mon.modbus_exporter
-# ingest.device_gateway.modbus -> middle.hw_mon.modbus_exporter
-# ingest.device_gateway.modbus -> middle.hw_mon.modbus_exporter
-# ingest.device_gateway.onewire -> middle.hw_mon.onewire_exporter
-# hw.perlmutter.exp -> ingest.perlmutter_ingest.vmagent-p
-# hw.spin.exp -> ingest.isg_ingest.vmagent-isg
-# hw.ngf.exp -> ingest.ngf_ingest.vmagent-ngf
-# hw.hpss.exp -> ingest.hpss_ingest.vmagent-hpss
-# ingest.perlmutter_ingest.vmagent-p -> dbs.vmdb
-# ingest.isg_ingest.vmagent-isg -> dbs.vmdb
-# ingest.ngf_ingest.vmagent-ngf -> dbs.vmdb
-# ingest.hpss_ingest.vmagent-hpss -> dbs.vmdb
-# }
